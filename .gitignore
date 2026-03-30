@@ -1,0 +1,14 @@
+Data_collection_rev1/
+dynamixel_files_and_sdk/
+dynamixel_files/
+Growbot_files/
+Matlab_NDI_APIs-master/
+training_models/
+Yasmin_models/
+paper_plots/
+
+
+*.zip
+.idea/
+__pycache__/
+*.pyc
