@@ -43,7 +43,7 @@ def un_normalize_it(input_data, total_p_min, total_p_max, scaling_factor):
     return input_array
 
 
-def inverse_time_series_conversion(Positions, Actions, revision):
+def inverse_time_series_conversion(Positions, Actions, Baseline_variant):
     input_features, output_features = [], []
     next_inst_pos = Positions[2, :]
     current_inst_pos = Positions[1, :]
@@ -55,36 +55,16 @@ def inverse_time_series_conversion(Positions, Actions, revision):
     past_past_inst_tau = Actions[0, :]
     past_past_past_inst_tau = Actions[0, :]
     for i in range(2, Positions.shape[0] - 1):
-        if revision == 0:
-            temp_inp_features = np.hstack((past_inst_tau, current_inst_pos, next_inst_pos))
-            multiplier = 3
-        elif revision == 1:   # test 2
-            temp_inp_features = np.hstack((past_inst_tau, past_inst_pos, current_inst_pos, next_inst_pos))
-            multiplier = 4
-        elif revision == 2:
-            temp_inp_features = np.hstack((past_past_inst_tau, past_inst_tau,
-                                           past_inst_pos, current_inst_pos, next_inst_pos))
-            multiplier = 5
-        elif revision == 3:
-            temp_inp_features = np.hstack((past_past_inst_tau, past_inst_tau,
-                                           current_inst_pos, next_inst_pos))
-            multiplier = 4
-        elif revision == 4:   # no need
-            temp_inp_features = np.hstack((past_past_inst_tau, past_inst_tau,
-                                           next_inst_pos))
-            multiplier = 3
-
-        elif revision == 5:    # test 3
-            temp_inp_features = np.hstack((past_inst_tau,
-                                           next_inst_pos))
-            multiplier = 2
-        elif revision == 6:    # no need
-            temp_inp_features = np.hstack((current_inst_pos, next_inst_pos))
-            multiplier = 2
-        elif revision == 7:   # test 1
+        if Baseline_variant == 7:   # ---> B^(1)
             temp_inp_features = np.hstack((past_inst_pos, current_inst_pos, next_inst_pos))
             multiplier = 3
-        elif revision == 8:   # test 4
+        elif Baseline_variant == 1:   # ---> B^(2)
+            temp_inp_features = np.hstack((past_inst_tau, past_inst_pos, current_inst_pos, next_inst_pos))
+            multiplier = 4
+        elif Baseline_variant == 5:   # ---> B^(3)
+            temp_inp_features = np.hstack((past_inst_tau, next_inst_pos))
+            multiplier = 2
+        elif Baseline_variant == 8:   # ---> Main Policy Results
             temp_inp_features = np.hstack((past_past_past_inst_tau, past_past_inst_tau, past_inst_tau, next_inst_pos))
             multiplier = 4
         else:

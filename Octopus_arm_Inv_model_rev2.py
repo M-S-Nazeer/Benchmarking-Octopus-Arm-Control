@@ -140,16 +140,28 @@ TRAINING_FLAG = True
 OL_TESTING_FLAG = True
 CL_TESTING_FLAG = True
 FREEZE_MODEL = True
-revision = 7
-ANN_file_name = model_directory + "INV_LSTM_model_weights_" + str(frequency) + "Hz_rev" + str(revision) + ".keras"
-ANN_gen_file = model_directory + "INV_LSTM_model_weights_" + str(frequency) + "Hz_rev" + str(revision) + ".keras"
-file_model = "INV_LSTM_model_rev" + str(revision)
+Baseline_variants = "mainPolicy"    # ["B1", "B2", "B3", "mainPolicy"]
+if Baseline_variants == "B1":
+    Baseline_variant = 7
+elif Baseline_variants == "B2":
+    Baseline_variant = 1
+elif Baseline_variants == "B3":
+    Baseline_variant = 5
+elif Baseline_variants == "mainPolicy":
+    Baseline_variant = 8
+else:
+    print("Invalid Model Baseline")
+    exit()
+
+ANN_file_name = model_directory + "INV_LSTM_model_weights_" + str(frequency) + "Hz_rev" + str(Baseline_variant) + ".keras"
+ANN_gen_file = model_directory + "INV_LSTM_model_weights_" + str(frequency) + "Hz_rev" + str(Baseline_variant) + ".keras"
+file_model = "INV_LSTM_model_rev" + str(Baseline_variant)
 
 if OL_TESTING_FLAG:
     # ------------------------------- DATA PREPARATION FOR TRAINING ----------------------------------- #
 
     input_features, output_features = inverse_time_series_conversion(Positions=robot_positions_n,
-                                                                     Actions=tendon_actions_n, revision=revision)
+                                                                     Actions=tendon_actions_n, Baseline_variant=Baseline_variant)
 
     # Split the data into training and testing dataset
     train_data, test_data, train_label, test_label = train_test_split(input_features, output_features, test_size=0.3,
@@ -214,7 +226,7 @@ if OL_TESTING_FLAG:
 
         my_callbacks = [
             # tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10),
-            tf.keras.callbacks.ModelCheckpoint(filepath=model_directory + 'IDM_dir_' + str(frequency) + 'Hz/TD_robot_{epoch:02d}_IDM_norm_rev' + str(revision) + '.keras',
+            tf.keras.callbacks.ModelCheckpoint(filepath=model_directory + 'IDM_dir_' + str(frequency) + 'Hz/TD_robot_{epoch:02d}_IDM_norm_rev' + str(Baseline_variant) + '.keras',
                                                save_best_only=True),
             tf.keras.callbacks.TensorBoard(log_dir=model_directory + 'IDM_dir_' + str(frequency) + 'Hz/logs')
         ]
@@ -334,17 +346,9 @@ if FREEZE_MODEL:
 
 # To do closed loop testing now
 if CL_TESTING_FLAG:
-    # if TRAINING_FLAG:
-    #     # For open loop testing
-    #     model = tf.keras.models.load_model(ANN_file_name)
-    #     print('model is loaded for CL testing...')
-    # else:
-    #     # For open loop testing
-    #     model = tf.keras.models.load_model(ANN_gen_file)
-    #     print('model is loaded for CL testing...')
 
     # Load the frozen trained dynamics model for faster predictions
-    with gfile.GFile(model_directory + "IDM_dir_" + str(frequency) + "Hz/INV_LSTM_model_rev" + str(revision) + ".pb",
+    with gfile.GFile(model_directory + "IDM_dir_" + str(frequency) + "Hz/INV_LSTM_model_" + str(Baseline_variant) + ".pb",
                      'rb') as f:
         graph_def = tf.compat.v1.GraphDef()
         graph_def.ParseFromString(f.read(-1))
@@ -368,26 +372,23 @@ if CL_TESTING_FLAG:
     past_past_inst_tau = tendon_inps[0, :]
     past_past_past_inst_tau = tendon_inps[0, :]
     for i in range(1, combined_positions.shape[0] - 1):
-        if revision == 2:
-            # input preparation for revision 2
+        if Baseline_variant == 2:   # ---> Results not shown
             tau_pos_inp = (np.hstack([past_past_inst_tau, past_inst_tau, past_inst_pos, current_inst_pos, next_inst_pos])).reshape(1, 1, 15)
-        elif revision == 1:
-            # input preparation for revision 1
+        elif Baseline_variant == 1:   # ---> B^(2)
             tau_pos_inp = (np.hstack([past_inst_tau, past_inst_pos, current_inst_pos, next_inst_pos])).reshape(1, 1, 12)
-        elif revision == 0:
-            # input preparation for without revision
+        elif Baseline_variant == 0:   # ---> Results not shown
             tau_pos_inp = (np.hstack([past_inst_tau, current_inst_pos, next_inst_pos])).reshape(1, 1, 9)
-        elif revision == 3:
+        elif Baseline_variant == 3:   # ---> Results not shown
             tau_pos_inp = (np.hstack((past_past_inst_tau, past_inst_tau, current_inst_pos, next_inst_pos))).reshape(1, 1, 12)
-        elif revision == 4:
+        elif Baseline_variant == 4:   # ---> Results not shown
             tau_pos_inp = (np.hstack((past_past_inst_tau, past_inst_tau, next_inst_pos))).reshape(1, 1, 9)
-        elif revision == 5:
+        elif Baseline_variant == 5:   # ---> B^(3)
             tau_pos_inp = (np.hstack((past_inst_tau, next_inst_pos))).reshape(1, 1, 6)
-        elif revision == 6:
+        elif Baseline_variant == 6:   # ---> Results not shown
             tau_pos_inp = (np.hstack((current_inst_pos, next_inst_pos))).reshape(1, 1, 6)
-        elif revision == 7:
+        elif Baseline_variant == 7:   # ---> B^(1)
             tau_pos_inp = (np.hstack((past_inst_pos, current_inst_pos, next_inst_pos))).reshape(1, 1, 9)
-        elif revision == 8:
+        elif Baseline_variant == 8:   # ---> Main Policy Results
             tau_pos_inp = (np.hstack((past_past_past_inst_tau, past_past_inst_tau, past_inst_tau, next_inst_pos))).reshape(1, 1, 12)
         else:
             print("Case not implemented.....")
