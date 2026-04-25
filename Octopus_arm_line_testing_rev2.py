@@ -106,18 +106,8 @@ print("positions norm1: ", position_n)
 # ----------------------------- Create the 3D line -------------------------------- #
 # --------------------------------------------------------------------------------- #
 # Example usage
-Baseline_variants = "mainPolicy"    # ["B1", "B2", "B3", "mainPolicy"]
-if Baseline_variants == "B1":
-    Baseline_variant = 7
-elif Baseline_variants == "B2":
-    Baseline_variant = 1
-elif Baseline_variants == "B3":
-    Baseline_variant = 5
-elif Baseline_variants == "mainPolicy":
-    Baseline_variant = 8
-else:
-    print("Invalid Model Baseline")
-    exit()
+Baseline_variant = "mainPolicy"    # ["B1", "B2", "B3", "mainPolicy"]
+
 # line = create_3d_straight_line(axis='x', min_val=-50.0, max_val=100.0, step=step_size, const_vals=(position[1], -275.0))
 test_shape = "RPS_helix_abovewater"
 line_ = loadmat(data_directory + test_shape + ".mat")
@@ -158,7 +148,7 @@ plt.show()
 # loaded_model = tf.keras.models.load_model(ANN_file_name)
 
 # Load the frozen trained dynamics model for faster predictions
-with gfile.GFile(model_directory + "IDM_dir_" + str(model_freq) + "Hz/INV_LSTM_model_rev" + str(Baseline_variant) + ".pb", 'rb') as f:
+with gfile.GFile(model_directory + "IDM_dir_" + str(model_freq) + "Hz/INV_LSTM_model_" + Baseline_variant + ".pb", 'rb') as f:
     graph_def = tf.compat.v1.GraphDef()
     graph_def.ParseFromString(f.read(-1))
 
@@ -171,8 +161,8 @@ IDM_op_tensor = sess1.graph.get_tensor_by_name('import/Identity:0')
 time_sample = 1 / robot_frequency
 
 for trial_n in range(1, 2):
-    new_data = (model_directory + test_shape + "_freq" + str(robot_frequency) + "_rev" +
-                str(Baseline_variant) + "_trial" + str(trial_n) + ".mat")
+    new_data = (model_directory + test_shape + "_freq" + str(robot_frequency) + "_" +
+                Baseline_variant + "_trial" + str(trial_n) + ".mat")
 
     actual_positions, actual_motors, desired_positions = [], [], []
 
@@ -196,13 +186,13 @@ for trial_n in range(1, 2):
     desired_positions.append(next_inst_pos)
     time_record = time.time()
     for l_n in range(1, normalized_line.shape[0]):
-        if Baseline_variant == 7:  # ---> B^(1)
+        if Baseline_variant == "B1":  # ---> B^(1)
             tau_pos_inp = (np.hstack((past_inst_pos, current_inst_pos, next_inst_pos))).reshape(1, 1, 9)
-        elif Baseline_variant == 1:   # ---> B^(2)
+        elif Baseline_variant == "B2":   # ---> B^(2)
             tau_pos_inp = np.stack((past_inst_tau, past_inst_pos, current_inst_pos, next_inst_pos)).reshape(1, 1, 12)
-        elif Baseline_variant == 5:   # ---> B^(3)
+        elif Baseline_variant == "B3":   # ---> B^(3)
             tau_pos_inp = (np.hstack((past_inst_tau, next_inst_pos))).reshape(1, 1, 6)
-        elif Baseline_variant == 8:   # ---> Main Policy Results
+        elif Baseline_variant == "mainPolicy":   # ---> Main Policy Results
             tau_pos_inp = (np.hstack((past_past_past_inst_tau, past_past_inst_tau, past_inst_tau, next_inst_pos))).reshape(1, 1, 12)
         else:
             print("Baseline_variant not implemented.....")

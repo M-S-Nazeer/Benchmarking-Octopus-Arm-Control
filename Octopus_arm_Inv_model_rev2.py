@@ -140,22 +140,11 @@ TRAINING_FLAG = True
 OL_TESTING_FLAG = True
 CL_TESTING_FLAG = True
 FREEZE_MODEL = True
-Baseline_variants = "mainPolicy"    # ["B1", "B2", "B3", "mainPolicy"]
-if Baseline_variants == "B1":
-    Baseline_variant = 7
-elif Baseline_variants == "B2":
-    Baseline_variant = 1
-elif Baseline_variants == "B3":
-    Baseline_variant = 5
-elif Baseline_variants == "mainPolicy":
-    Baseline_variant = 8
-else:
-    print("Invalid Model Baseline")
-    exit()
+Baseline_variant = "mainPolicy"    # ["B1", "B2", "B3", "mainPolicy"]
 
-ANN_file_name = model_directory + "INV_LSTM_model_weights_" + str(frequency) + "Hz_rev" + str(Baseline_variant) + ".keras"
-ANN_gen_file = model_directory + "INV_LSTM_model_weights_" + str(frequency) + "Hz_rev" + str(Baseline_variant) + ".keras"
-file_model = "INV_LSTM_model_rev" + str(Baseline_variant)
+ANN_file_name = model_directory + "INV_LSTM_model_weights_" + str(frequency) + "Hz_" + Baseline_variant + ".keras"
+ANN_gen_file = model_directory + "INV_LSTM_model_weights_" + str(frequency) + "Hz_" + Baseline_variant + ".keras"
+file_model = "INV_LSTM_model_" + Baseline_variant
 
 if OL_TESTING_FLAG:
     # ------------------------------- DATA PREPARATION FOR TRAINING ----------------------------------- #
@@ -226,7 +215,7 @@ if OL_TESTING_FLAG:
 
         my_callbacks = [
             # tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10),
-            tf.keras.callbacks.ModelCheckpoint(filepath=model_directory + 'IDM_dir_' + str(frequency) + 'Hz/TD_robot_{epoch:02d}_IDM_norm_rev' + str(Baseline_variant) + '.keras',
+            tf.keras.callbacks.ModelCheckpoint(filepath=model_directory + 'IDM_dir_' + str(frequency) + 'Hz/TD_robot_{epoch:02d}_IDM_norm_' + Baseline_variant + '.keras',
                                                save_best_only=True),
             tf.keras.callbacks.TensorBoard(log_dir=model_directory + 'IDM_dir_' + str(frequency) + 'Hz/logs')
         ]
@@ -348,7 +337,7 @@ if FREEZE_MODEL:
 if CL_TESTING_FLAG:
 
     # Load the frozen trained dynamics model for faster predictions
-    with gfile.GFile(model_directory + "IDM_dir_" + str(frequency) + "Hz/INV_LSTM_model_" + str(Baseline_variant) + ".pb",
+    with gfile.GFile(model_directory + "IDM_dir_" + str(frequency) + "Hz/INV_LSTM_model_" + Baseline_variant + ".pb",
                      'rb') as f:
         graph_def = tf.compat.v1.GraphDef()
         graph_def.ParseFromString(f.read(-1))
@@ -372,23 +361,13 @@ if CL_TESTING_FLAG:
     past_past_inst_tau = tendon_inps[0, :]
     past_past_past_inst_tau = tendon_inps[0, :]
     for i in range(1, combined_positions.shape[0] - 1):
-        if Baseline_variant == 2:   # ---> Results not shown
-            tau_pos_inp = (np.hstack([past_past_inst_tau, past_inst_tau, past_inst_pos, current_inst_pos, next_inst_pos])).reshape(1, 1, 15)
-        elif Baseline_variant == 1:   # ---> B^(2)
-            tau_pos_inp = (np.hstack([past_inst_tau, past_inst_pos, current_inst_pos, next_inst_pos])).reshape(1, 1, 12)
-        elif Baseline_variant == 0:   # ---> Results not shown
-            tau_pos_inp = (np.hstack([past_inst_tau, current_inst_pos, next_inst_pos])).reshape(1, 1, 9)
-        elif Baseline_variant == 3:   # ---> Results not shown
-            tau_pos_inp = (np.hstack((past_past_inst_tau, past_inst_tau, current_inst_pos, next_inst_pos))).reshape(1, 1, 12)
-        elif Baseline_variant == 4:   # ---> Results not shown
-            tau_pos_inp = (np.hstack((past_past_inst_tau, past_inst_tau, next_inst_pos))).reshape(1, 1, 9)
-        elif Baseline_variant == 5:   # ---> B^(3)
-            tau_pos_inp = (np.hstack((past_inst_tau, next_inst_pos))).reshape(1, 1, 6)
-        elif Baseline_variant == 6:   # ---> Results not shown
-            tau_pos_inp = (np.hstack((current_inst_pos, next_inst_pos))).reshape(1, 1, 6)
-        elif Baseline_variant == 7:   # ---> B^(1)
+        if Baseline_variant == "B1":  # ---> B^(1)
             tau_pos_inp = (np.hstack((past_inst_pos, current_inst_pos, next_inst_pos))).reshape(1, 1, 9)
-        elif Baseline_variant == 8:   # ---> Main Policy Results
+        elif Baseline_variant == "B2":   # ---> B^(2)
+            tau_pos_inp = (np.hstack([past_inst_tau, past_inst_pos, current_inst_pos, next_inst_pos])).reshape(1, 1, 12)
+        elif Baseline_variant == "B3":   # ---> B^(3)
+            tau_pos_inp = (np.hstack((past_inst_tau, next_inst_pos))).reshape(1, 1, 6)
+        elif Baseline_variant == "mainPolicy":   # ---> Main Policy Results
             tau_pos_inp = (np.hstack((past_past_past_inst_tau, past_past_inst_tau, past_inst_tau, next_inst_pos))).reshape(1, 1, 12)
         else:
             print("Case not implemented.....")

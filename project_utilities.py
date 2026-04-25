@@ -55,16 +55,16 @@ def inverse_time_series_conversion(Positions, Actions, Baseline_variant):
     past_past_inst_tau = Actions[0, :]
     past_past_past_inst_tau = Actions[0, :]
     for i in range(2, Positions.shape[0] - 1):
-        if Baseline_variant == 7:   # ---> B^(1)
+        if Baseline_variant == "B1":   # ---> B^(1)
             temp_inp_features = np.hstack((past_inst_pos, current_inst_pos, next_inst_pos))
             multiplier = 3
-        elif Baseline_variant == 1:   # ---> B^(2)
+        elif Baseline_variant == "B2":   # ---> B^(2)
             temp_inp_features = np.hstack((past_inst_tau, past_inst_pos, current_inst_pos, next_inst_pos))
             multiplier = 4
-        elif Baseline_variant == 5:   # ---> B^(3)
+        elif Baseline_variant == "B3":   # ---> B^(3)
             temp_inp_features = np.hstack((past_inst_tau, next_inst_pos))
             multiplier = 2
-        elif Baseline_variant == 8:   # ---> Main Policy Results
+        elif Baseline_variant == "mainPolicy":   # ---> Main Policy Results
             temp_inp_features = np.hstack((past_past_past_inst_tau, past_past_inst_tau, past_inst_tau, next_inst_pos))
             multiplier = 4
         else:
